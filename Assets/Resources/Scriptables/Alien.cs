@@ -78,29 +78,29 @@ public class Alien : MonoBehaviour
             case "top":
                 // Switch the y velocity from positive to negative
                 // dY = dY * (-1) + Random.Range(0f, 0.5f);
-                dY = dY * (-1);
+                dY = dY * (-1) * Random.Range(1f, 1.15f);
                 break;
             case "bottom":
                 // Switch the y velocity from positive to negative
                 // dY = dY * (-1) + Random.Range(0f, 0.5f);
-                dY = dY * (-1);
+                dY = dY * (-1) * Random.Range(1f, 1.15f);
                 break;
             case "left":
                 // Switch the x velocity from positive to negative
                 // dX = dX * (-1) + Random.Range(0f, 0.5f);
-                dX = dX * (-1);
+                dX = dX * (-1) * Random.Range(1f, 1.15f);
                 break;
             case "right":
                 // Switch the x velocity from positive to negative
                 // dX = dX * (-1) + Random.Range(0f, 0.5f);
-                dX = dX * (-1);
+                dX = dX * (-1) * Random.Range(1f, 1.15f);
                 break;
             default:
                 break;
         }
 
         // Cap the value of the movement
-        float max = 0.4f;
+        float max = 0.5f;
         if (dX < 0)
             dX = (dX < (-1 * max)) ? (-1 * max) : dX;
         else

@@ -116,7 +116,7 @@ namespace Simulation
                     x++;
                 }
             }
-            
+
             // Load the weights in v
             for (int i = 0; i < v.GetUpperBound(0) + 1; i++)
             {
@@ -136,6 +136,15 @@ namespace Simulation
         /// <returns>An array of K doubles where K is the number of output neurons.</returns>
         public double[] GetOutput(double[] inputs)
         {
+            // The output neurons use the sigmoid
+            // Func<double, double, double> outer = (net, lambda) =>
+            // {
+            //     double numerator = 1;
+            //     double denominator = 1 + Math.Exp((-1.0) * lambda * net);
+
+            //     return numerator / denominator;
+            // };
+
             // For each output neuron, get its value using the FFNN formula
             double[] outputs = new double[K];
             double[] hidden = new double[J + 1];

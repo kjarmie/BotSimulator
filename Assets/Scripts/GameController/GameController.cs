@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 namespace Simulation
@@ -44,8 +45,8 @@ namespace Simulation
         void Start()
         {
             random = new System.Random();
-            
-            
+
+
             RunEA();
 
             Application.Quit();
@@ -54,13 +55,13 @@ namespace Simulation
         void RunEA()
         {
             // Parameters
-            nrAgents = 50;
-            totAgents = 50;
-            nrAliens = 10;
+            nrAgents = 25;
+            totAgents = 25;
+            nrAliens = 15;
 
-            int K = 2;  // number of outputs
-            int I = 2 + (nrAliens * 4) + 4; // number of inputs
-            int J = 24; // number of hidden
+            int K = 8;  // number of outputs
+            int I = 2 + (nrAliens * 1) + 4; // number of inputs
+            int J = 18; // number of hidden
 
             // Set the parameters
             nrWeights = (K * (J + 1)) + (J * (I + 1)); // inputs + 1 + hidden + 1 + output;
@@ -97,7 +98,6 @@ namespace Simulation
             spaceshipPrefab.gameObject.SetActive(false);
 
             // Create the aliens
-            nrAliens = 10;
             aliens = new Alien[nrAliens];
             for (int i = 0; i < nrAliens; i++)
             {
@@ -116,13 +116,12 @@ namespace Simulation
             alienPrefab.gameObject.SetActive(false);
 
             // Use the collected brains to start the training
-            StartCoroutine(Train(initPop, 250, totAgents, nrWeights, -1, 1, 0.4, 0.50, 0.5));
+            StartCoroutine(Train(initPop, 100, totAgents, nrWeights, -1, 1, 0.4, 0.50, 0.5));
             StartCoroutine(UpdateScoreBoard());
         }
 
         public void Simulate(double[,] population)
         {
-            generation++;
             txtGenerations.SetText("Generation: " + generation);
 
             double[] fitness = new double[population.GetUpperBound(0) + 1];
@@ -183,10 +182,11 @@ namespace Simulation
             }
         }
 
-        private void SaveData(string file_name) {
+        private void SaveData(string file_name)
+        {
             // Create writer
             string local_dir = Directory.GetCurrentDirectory();
-            string new_directory = local_dir + @"\outputs\level\";
+            string new_directory = local_dir + @"\outputs\";
             Directory.CreateDirectory(new_directory);
 
             string new_file = new_directory + file_name;
@@ -203,6 +203,16 @@ namespace Simulation
             }
             writer.Flush();
             writer.Close();
+
+            writer = new StreamWriter(new_directory + "weights.txt");
+            for (int i = 0; i < solution.Length; i++)
+            {
+                // Get the score
+                string score = String.Format("{0:0.000}", solution[i]);
+
+                // Write
+                writer.Write(score + "\n");
+            }
         }
 
 
@@ -234,6 +244,24 @@ namespace Simulation
             Time.timeScale = 20f;
             timeMult = 20f;
             txtTimeScale.SetText("Timescale: MAX");
+        }
+
+        public void btnPause()
+        {
+            // Invert the time multiplier
+            Time.timeScale = (Time.timeScale == 0f) ? timeMult : 0f;
+        }
+
+        public void btnSave()
+        {
+            // End all co-routines
+            StopAllCoroutines();
+
+            // Save the data from the simulation
+            SaveData("scores.txt");
+
+            // Load the main menu
+            SceneManager.LoadScene("Menu");
         }
 
         protected double[] fitness;     // holds the fitness of each chromosome in the current population
@@ -272,12 +300,13 @@ namespace Simulation
             InitPopulation(initPopulation);
 
             fitness = new double[totAgents];
+            solution = new double[nrWeights];
             scores = new ArrayList();
 
             // Process
             // while the terminating conditions are not met
-            int curGeneration = 0;
-            while (curGeneration < maxGenerations)
+            generation = 0;
+            while (generation < maxGenerations)
             {
                 // Evaluate their fitness - in this specific case, the evaluation is done by simulation
                 EvaluateFitnessAll();
@@ -311,6 +340,23 @@ namespace Simulation
                 }
                 scores.Add(fitness[best]);
 
+                // Print the time of death of each agent in this population
+                if (generation == 1 || generation == 5 || generation == 10 || generation == 20 || generation == 100 || generation == 250 || generation == 500)
+                {
+                    // Create a writer
+                    StreamWriter writer = new StreamWriter(Directory.GetCurrentDirectory() + @"\outputs\time_of_death\" + generation + ".txt");
+
+                    // Write all times of death
+                    writer.Write("Spaceship;Time Of Death");
+                    for (int i = 0; i < totAgents; i++)
+                    {
+                        string str = String.Format(format: "{0};{1:0.000}", i, spaceships[i].timeOfDeath);
+                        writer.Write(str + "\n");
+                    }
+
+                    writer.Flush();
+                    writer.Close();
+                }
 
                 // Change the scoreboard
                 txtBest.SetText(String.Format("Best: {0:0.000}s", time));
@@ -348,7 +394,7 @@ namespace Simulation
                     population[popSize - 1, j] = parent2[j];
                 }
 
-                curGeneration++;
+                generation++;
             }
 
             SaveData("scores.txt");
