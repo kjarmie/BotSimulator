@@ -11,12 +11,13 @@ namespace Simulation
         protected int K; // total number of output neurons
         protected int P; // total number of input patterns
         protected int J; // total number of hidden neurons
-        protected int I; // total number of inputs per pattern
+        protected int I; // total number of inputs neurons
 
-        protected Activation activation;    // represents a specific activation function for the neurons (such as Sigmoid, Linear, etc.)
+        protected Func<double, double, double> activation;    // represents a specific activation function for the neurons (such as Sigmoid, Linear, etc.)
 
         // HELPER ATTRIBUTES
         protected Random r;     // the random object that will produce random values for initialization
+        int nrWeights;          // the number of weights that are in the NN as a whole
 
         /// <summary>
         /// 
@@ -26,20 +27,21 @@ namespace Simulation
         /// <param name="nrOutputs">The number of output neurons.</param>
         /// <param name="wLower">The minimum starting value for the weights.</param>
         /// <param name="wUpper">The maximum starting value for the weights.</param>
-        public NN(int nrInputs, int nrHidden, int nrOutputs, double wLower, double wUpper)
+        public NN(int nrInputs, int nrHidden, int nrOutputs, double wLower, double wUpper, Func<double, double, double> activation)
         {
             // Create the data structures
-
+            this.activation = activation;
             // Assign the sizes
             this.K = nrOutputs;
-            this.P = nrInputs;
+            this.I = nrInputs;
             this.J = nrHidden;
 
             // Create the arrays
             w = new double[K, J + 1];
             v = new double[J, I + 1];
 
-            r = new Random(25256);
+            // r = new Random(25256);
+            r = new Random();
 
             // Initialize the weights
             for (int k = 0; k < K; k++)
@@ -50,7 +52,7 @@ namespace Simulation
                     w[k, j] = newWeight;
                 }
             }
-            for (int j = 0; j < K; j++)
+            for (int j = 0; j < J; j++)
             {
                 for (int i = 0; i < I + 1; i++)
                 {
@@ -58,14 +60,81 @@ namespace Simulation
                     v[j, i] = newWeight;
                 }
             }
+
+            // Assign the number of weights
+            //nrWeights = w.GetUpperBound(0) + 1 + w.GetUpperBound(1) + 1 + v.GetUpperBound(0) + 1 + v.GetUpperBound(1) + 1;
+
+            nrWeights = (K * (J + 1)) + (J * (I + 1));
         }
+
+        /// <summary>
+        /// This method will take all the weights from the NN and wrap them into a 1D array.
+        /// </summary>
+        /// <returns></returns>
+        public double[] wrap()
+        {
+            // Create the array of weights
+            double[] weights = new double[nrWeights];
+
+            // Load the weights from w and from v
+            int x = 0;
+            for (int i = 0; i < w.GetUpperBound(0) + 1; i++)
+            {
+                for (int j = 0; j < w.GetUpperBound(1) + 1; j++)
+                {
+                    weights[x] = w[i, j];
+                    x++;
+                }
+            }
+            for (int i = 0; i < v.GetUpperBound(0) + 1; i++)
+            {
+                for (int j = 0; j < v.GetUpperBound(1) + 1; j++)
+                {
+                    weights[x] = v[i, j];
+                    x++;
+                }
+            }
+
+            // Return the weights
+            return weights;
+        }
+
+        /// <summary>
+        /// This method will take in a set of weights and apply them to the NN
+        /// </summary>
+        /// <param name="weights">The input weights</param>
+        public void unwrap(double[] weights)
+        {
+            // Load the weights into w
+            int x = 0;
+
+            for (int i = 0; i < w.GetUpperBound(0) + 1; i++)
+            {
+                for (int j = 0; j < w.GetUpperBound(1) + 1; j++)
+                {
+                    w[i, j] = weights[x];
+                    x++;
+                }
+            }
+            
+            // Load the weights in v
+            for (int i = 0; i < v.GetUpperBound(0) + 1; i++)
+            {
+                for (int j = 0; j < v.GetUpperBound(1) + 1; j++)
+                {
+                    v[i, j] = weights[x];
+                    x++;
+                }
+            }
+        }
+
 
         /// <summary>
         /// This method will produce the array of outputs based on the provided inputs.
         /// </summary>
         /// <param name="inputs">An array of P doubles where P is the number of input neurons.</param>
         /// <returns>An array of K doubles where K is the number of output neurons.</returns>
-        private double[] GetOutput(double[] inputs)
+        public double[] GetOutput(double[] inputs)
         {
             // For each output neuron, get its value using the FFNN formula
             double[] outputs = new double[K];
@@ -90,7 +159,8 @@ namespace Simulation
                         }
 
                         // Set the output for the hidden neuron as function of netY
-                        hidden[j] = activation.activate(netY, 1);
+                        // hidden[j] = activation.activate(netY, 1);
+                        hidden[j] = activation(netY, 1);
                     }
 
                     else
@@ -103,7 +173,8 @@ namespace Simulation
                 }
 
                 // Set the output of the output neuron as a function of the netO
-                outputs[k] = activation.activate(netO, 1);
+                // outputs[k] = activation.activate(netO, 1);
+                outputs[k] = activation(netO, 1);
             }
 
             return outputs;
