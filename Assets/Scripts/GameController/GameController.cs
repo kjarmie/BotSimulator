@@ -341,7 +341,7 @@ namespace Simulation
                 scores.Add(fitness[best]);
 
                 // Print the time of death of each agent in this population
-                if (generation == 1 || generation == 5 || generation == 10 || generation == 20 || generation == 100 || generation == 250 || generation == 500)
+                if (generation == 1 || generation == 5 || generation == 10 || generation == 20 || generation == 50 || generation == 100 || generation == 250 || generation == 500)
                 {
                     // Create a writer
                     StreamWriter writer = new StreamWriter(Directory.GetCurrentDirectory() + @"\outputs\time_of_death\" + generation + ".txt");
